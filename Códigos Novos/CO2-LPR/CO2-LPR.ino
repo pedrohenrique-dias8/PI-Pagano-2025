@@ -21,7 +21,6 @@ Preferences preferences;  // Armazena credenciais Wi-Fi na memória flash
 
 // Configurações MQTT
 const char* mqtt_server = "192.168.0.137";     // IP do Broker Mosquitto
-//const char* command_topic = "COMANDO-POSAUTO";  //Tópico para leitura do sinal de comando
 String publish_topic = "CO2-LPR";      //Tópico para envio dos dados obtidos
 WiFiClientSecure espClient;
 PubSubClient client(espClient); //mudou aqui
@@ -45,7 +44,7 @@ bool botao = false;  // Estado do botão via MQTT
 unsigned long previousLoopMillis = 0;
 unsigned long previousSendMillis = 0;
 
-const long sendInterval = 10000;  // Intervalo de 5 segundos para enviar as mensagens
+const long sendInterval = 30000;  // Intervalo de 5 segundos para enviar as mensagens
 const long loopInterval = 2000;
 
 int histerese = 20;
@@ -76,16 +75,7 @@ void callback(char* topic, byte* payload, unsigned int length) {
   Serial.print("Mensagem: ");
   Serial.println(message);
 
-  // Verifica o tópico COMANDO-SALA1 e altera o LED de acordo com a mensagem
-  if (String(topic) == command_topic) {
-    if (message == "1") {
-      digitalWrite(LED_MQTT, HIGH);  // Liga o LED MQTT
-      botao = true;
-    } else if (message == "0") {
-      digitalWrite(LED_MQTT, LOW);  // Desliga o LED MQTT
-      botao = false;
-    }
-  }
+ 
 }
 
 // Função para conectar ao MQTT
@@ -95,7 +85,6 @@ void reconnect() { //mudou toda funcao
     String clientId = "ESP32Client-" + String(random(0xffff), HEX);
     if (client.connect(clientId.c_str(), "teste123", "Teste123")) {
       Serial.println("Conectado com sucesso!");
-      client.subscribe(command_topic);
     } else {
       Serial.print("Falha. Código: ");
       Serial.print(client.state());

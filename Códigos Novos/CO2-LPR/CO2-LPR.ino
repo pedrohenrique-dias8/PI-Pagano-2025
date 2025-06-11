@@ -177,91 +177,18 @@ void connectWiFi() {
   }
 }
 // Função para verificação do estado de um relé
-String consultarEstadoSonoff(String ipRele, String idRele) {
-  HTTPClient http;
-  http.setTimeout(1000);  // Timeout rápido
-  http.setConnectTimeout(1000);
 
-  String url = "http://" + ipRele + ":8081/zeroconf/info";
-  http.begin(url);
-  http.addHeader("Content-Type", "application/json");
 
-  // Monta o corpo JSON
-  String corpo = "{\"deviceid\":\"" + idRele + "\",\"data\":{}}";
 
-  String estado = "";  // Inicializa como vazio, sem alteração até que a requisição seja bem-sucedida
-
-  int httpCode = http.POST(corpo);
-
-  // Verifica se o código HTTP está na faixa 2xx (sucesso)
-  if (httpCode >= 200 && httpCode < 300) {
-    String resposta = http.getString();
-
-    // Verifica se a resposta contém "switch":"on" ou "switch":"off"
-    if (resposta.indexOf("\"switch\":\"on\"") != -1) {
-      estado = "on";  // Relé está ligado
-    } else if (resposta.indexOf("\"switch\":\"off\"") != -1) {
-      estado = "off";  // Relé está desligado
-    }
-  }
-
-  http.end();
-  return estado;  // Retorna o estado atualizado ou vazio se não houve alteração
-}
-// Função para enviar comandos aos relés
-void enviarComandoSonoff(String ips[], String ids[], String estados[]) {
-  for (int i = 0; i < 3; i++) {
-    HTTPClient http;
-    String url = "http://" + ips[i] + ":8081/zeroconf/switch";
-    http.setTimeout(1000);
-    http.setConnectTimeout(1000);
-    http.begin(url);
-    http.addHeader("Content-Type", "application/json");
-
-    // Cria o JSON com ArduinoJson
-    StaticJsonDocument<256> doc;
-    doc["deviceid"] = ids[i];
-    doc["data"]["switch"] = estados[i];
-
-    // Serializa para uma string
-    String body;
-    serializeJson(doc, body);
-
-    int httpCode = http.POST(body);
-
-    if (httpCode > 0) {
-      Serial.println("Comando enviado com sucesso para " + ids[i] + ": " + estados[i]);
-    } else {
-      Serial.println("Erro ao enviar comando para " + ids[i] + ": " + http.errorToString(httpCode));
-    }
-
-    http.end();
-  }
-}
 
 bool leituraCO2Valida(int ppm) {
   return (ppm >= 250 && ppm <= 5000);  // Limites realistas do sensor
 }
 
-void publicarDadosMQTT(String estados[]) {
+void publicarDadosMQTT() {
   // Publica valor de CO2
   client.publish((publish_topic + "/CO2").c_str(), String(CO2).c_str());
 
-  // Publica estados dos exaustores
-  client.publish((publish_topic + "/Exaustor1").c_str(), estados[0] == "on" ? "1" : "0");
-  client.publish((publish_topic + "/Exaustor2").c_str(), estados[1] == "on" ? "1" : "0");
-  client.publish((publish_topic + "/Exaustor3").c_str(), estados[2] == "on" ? "1" : "0");
-}
-
-String montarPaginaHTML() {
-  String html = "<!DOCTYPE html><html><head><meta charset='UTF-8'>";
-  html += "<meta http-equiv='refresh' content='5'>";
-  html += "<title>CO₂ Monitor</title></head><body>";
-  html += "<h1>Nível de CO₂</h1>";
-  html += "<p style='font-size:24px;'>🟢 <strong>" + String(CO2) + " ppm</strong></p>";
-  html += "<p><small>Atualiza a cada 5 segundos</small></p>";
-  html += "</body></html>";
-  return html;
 }
 
 void setup() {
@@ -373,74 +300,44 @@ void loop() {
     }
     Serial.print("CO2: ");  // Envia o valor de CO2 para a Serial
     Serial.println(CO2);
-    Serial.print("exaustores: ");  // Envia o valor de CO2 para a Serial
-    Serial.println(estados[0] + estados[1] + estados[2]);
+    //
     //server.handleClient();
   }
 
-  // Controle Serial para ligar/desligar os relés manualmente
-  /*
-  if (Serial.available()) {
-      String comando = Serial.readStringUntil('\n');
-      comando.trim();
-
-      if (comando.equalsIgnoreCase("ligar")) {
-          enviarComandoSonoff(IpRele1, idRele1, "on");
-          enviarComandoSonoff(IpRele2, idRele2, "on");
-          enviarComandoSonoff(IpRele3, idRele3, "on");
-          Serial.println("Relés ligados manualmente via Serial.");
-      } else if (comando.equalsIgnoreCase("desligar")) {
-          enviarComandoSonoff(IpRele1, idRele1, "off");
-          enviarComandoSonoff(IpRele2, idRele2, "off");
-          enviarComandoSonoff(IpRele3, idRele3, "off");
-          Serial.println("Relés desligados manualmente via Serial.");
-      }
-  }
-  */
+  
 
   // Loop de comando e envio de dados
   if (currentMillis - previousSendMillis >= sendInterval) {
     previousSendMillis = currentMillis;
-    publicarDadosMQTT(estados);
+    publicarDadosMQTT();
 
     // Controle dos LEDs conforme os níveis de CO₂
     if ((CO2 < 650) && (manual==false)){
       digitalWrite(LED_GREEN, LOW);
       digitalWrite(LED_YELLOW, LOW);
       digitalWrite(LED_RED, LOW);
-      // Desliga todos os relés
-      estados[0] = "off";
-      estados[1] = "off";
-      estados[2] = "off";
+    
 
     } else if ((CO2 >= 650 + histerese) && (CO2 < 900) && (manual==false)) {
       digitalWrite(LED_GREEN, HIGH);
       digitalWrite(LED_YELLOW, LOW);
       digitalWrite(LED_RED, LOW);
-      // Liga 1 relé
-      estados[0] = "on";
-      estados[1] = "off";
-      estados[2] = "off";
+      
 
     } else if ((CO2 >= 900 + histerese) && (CO2 < 1200) && (manual==false)) {
       digitalWrite(LED_GREEN, LOW);
       digitalWrite(LED_YELLOW, HIGH);
       digitalWrite(LED_RED, LOW);
-      // Liga 2 relés
-      estados[0] = "on";
-      estados[1] = "on";
-      estados[2] = "off";
+      
+    
 
     } else if ((CO2 > 1200 + histerese) && (manual==false)) {
       digitalWrite(LED_GREEN, LOW);
       digitalWrite(LED_YELLOW, LOW);
       digitalWrite(LED_RED, HIGH);
-      // Liga os 3 relés
-      estados[0] = "on";
-      estados[1] = "on";
-      estados[2] = "on";
+     
     }
 
-  //enviarComandoSonoff(ips, ids, estados);
+  
   }
 }

@@ -7,13 +7,13 @@ services:
       DOCKER_INFLUXDB_INIT_MODE: setup
       DOCKER_INFLUXDB_INIT_USERNAME_FILE: /run/secrets/influxdb2-admin-username
       DOCKER_INFLUXDB_INIT_PASSWORD_FILE: /run/secrets/influxdb2-admin-password
-      # DOCKER_INFLUXDB_INIT_ADMIN_TOKEN_FILE: /run/secrets/influxdb2-admin-token
-      DOCKER_INFLUXDB_INIT_ORG: docs
+      DOCKER_INFLUXDB_INIT_ADMIN_TOKEN_FILE: /run/secrets/influxdb2-admin-token
+      DOCKER_INFLUXDB_INIT_ORG: PIPAGANO
       DOCKER_INFLUXDB_INIT_BUCKET: home
     secrets:
       - influxdb2-admin-username
       - influxdb2-admin-password
-      # - influxdb2-admin-token
+      - influxdb2-admin-token
     volumes:
       - type: volume
         source: influxdb2-data
@@ -21,23 +21,39 @@ services:
       - type: volume
         source: influxdb2-config
         target: /etc/influxdb2
+    restart: always
 
-  grafana:
-    image: grafana/grafana-enterprise
-    container_name: grafana
-    restart: unless-stopped
-    ports:
-     - '3000:3000'
-    # volumes:
-    #   - '$PWD/data:/var/lib/grafana'
+  grafana-pdc-agent:
+    image: grafana/pdc-agent:latest
+    container_name: grafana-pdc-agent
+    command: -token ${GCLOUD_PDC_SIGNING_TOKEN} -cluster ${GCLOUD_PDC_CLUSTER} -gcloud-hosted-grafana-id ${GCLOUD_HOSTED_GRAFANA_ID}
+    environment:
+      GCLOUD_PDC_SIGNING_TOKEN: ${GCLOUD_PDC_SIGNING_TOKEN}
+      GCLOUD_PDC_CLUSTER: ${GCLOUD_PDC_CLUSTER}
+      GCLOUD_HOSTED_GRAFANA_ID: ${GCLOUD_HOSTED_GRAFANA_ID}
+    restart: always
+
+  python-script-POSAUTO:
+    image: python-script:latest
+    container_name: python-script-POSAUTO
+    restart: always
+
+  # grafana:
+  #   image: grafana/grafana-enterprise
+  #   container_name: grafana
+  #   restart: unless-stopped
+  #   ports:
+  #    - '3000:3000'
+  #   # volumes:
+  #   #   - '$PWD/data:/var/lib/grafana'
 
 secrets:
   influxdb2-admin-username:
     file: ./.env.influxdb2-admin-username
   influxdb2-admin-password:
     file: ./.env.influxdb2-admin-password
-  # influxdb2-admin-token:
-  #   file: ./.env.influxdb2-admin-token
+  influxdb2-admin-token:
+    file: ./.env.influxdb2-admin-token
 volumes:
   influxdb2-data:
   influxdb2-config:

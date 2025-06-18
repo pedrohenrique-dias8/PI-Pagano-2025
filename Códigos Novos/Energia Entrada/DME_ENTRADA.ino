@@ -24,7 +24,7 @@ const char* ssid = "LMM";
 const char* password = "mecatronica";
 
 // ===== CONFIG MQTT =====
-const char* mqtt_server = "d525171d3c6d48f1b6e24a59f907e907.s1.eu.hivemq.cloud"; // ou seu domínio HiveMQ
+const char* mqtt_server = "2d3476b755a14f60ba5c6449a3dab224.s1.eu.hivemq.cloud"; // ou seu domínio HiveMQ
 const int mqtt_port = 8883;               // ou 8883 se for TLS
 const char* mqtt_topic = "DME_ENTRADA";
 const char* mqtt_client_user = "teste123";        // se tiver login no broker

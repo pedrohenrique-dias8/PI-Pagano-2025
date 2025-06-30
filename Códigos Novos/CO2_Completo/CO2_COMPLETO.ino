@@ -322,7 +322,7 @@ void setup() {
   client.setCallback(callback);
   // Conectar ao broker MQTT
   reconnect();
-  delay(500);
+  //delay(500);
   //enviarComandoSonoff(ips, ids, estados);
   // server.on("/", []() {
   //   server.send(200, "text/html", montarPaginaHTML());
@@ -337,6 +337,12 @@ bool manual = false;
 
 void loop() {
   unsigned long currentMillis = millis();
+  if (WiFi.status() != WL_CONNECTED) {
+    Serial.println("Wi-Fi caiu. Tentando reconectar...");
+    connectWiFi();
+    return;
+  }
+  
   if (!client.connected()) {
       reconnect();
   }

@@ -107,7 +107,7 @@ void loop() {
 
   client.loop();
 
-  if (millis() - lastSend > 10000) {
+  if (millis() - lastSend > 30000) {
     getAndSendData();
     lastSend = millis();
   }

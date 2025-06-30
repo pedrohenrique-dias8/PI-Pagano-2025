@@ -13,7 +13,7 @@
 JsonDocument doc;
 
 // ===== CONFIGS =====
-const int REPORT_INTERVAL = 10000; // a cada 2 segundos
+const int REPORT_INTERVAL = 30000; // a cada 30 segundos
 #define I2C_ADDRESS 0x48  
 #define D5 14  
 #define LED_1 16  

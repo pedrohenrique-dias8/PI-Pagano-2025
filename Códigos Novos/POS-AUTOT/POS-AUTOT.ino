@@ -248,9 +248,9 @@ void publicarDadosMQTT(String estados[]) {
   client.publish((publish_topic + "/CO2").c_str(), String(CO2).c_str());
 
   // Publica estados dos exaustores
-  client.publish((publish_topic + "/Exaustor1").c_str(), estados[0] == "on" ? "1" : "0");
-  client.publish((publish_topic + "/Exaustor2").c_str(), estados[1] == "on" ? "1" : "0");
-  client.publish((publish_topic + "/Exaustor3").c_str(), estados[2] == "on" ? "1" : "0");
+  //client.publish((publish_topic + "/Exaustor1").c_str(), estados[0] == "on" ? "1" : "0");
+  //client.publish((publish_topic + "/Exaustor2").c_str(), estados[1] == "on" ? "1" : "0");
+  //client.publish((publish_topic + "/Exaustor3").c_str(), estados[2] == "on" ? "1" : "0");
 }
 
 String montarPaginaHTML() {

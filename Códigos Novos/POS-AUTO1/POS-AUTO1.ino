@@ -198,7 +198,7 @@ void setup() {
   connectWiFi();
   
   // Configurar MQTT
-  client.setServer("2a7050fcee684f8ab8199d7997a90fa2.s1.eu.hivemq.cloud", 8883); //mudou aqui
+  client.setServer("e4fb5f817ccf493b8dc42760e29c99ea.s1.eu.hivemq.cloud", 8883); //mudou aqui
   espClient.setInsecure();  // permite conexão TLS sem validar certificado
 
   // Conectar ao broker MQTT

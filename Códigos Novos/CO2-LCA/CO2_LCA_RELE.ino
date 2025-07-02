@@ -49,7 +49,7 @@ unsigned long previusManualMillis = 0;
 
 const long sendInterval = 10000;  // Intervalo de 5 segundos para enviar as mensagens
 const long loopInterval = 2500;
-const long manualInterval = 2*10000;
+const long manualInterval = 2*10000*60; //20minutos de modo manual
 
 int histerese = 20;
 int leiturasInvalidas = 0;
@@ -182,6 +182,7 @@ void connectWiFi() {
 // Função para verificação do estado de um relé
 void consultarEstadosSonoff() {
   for (int i = 0; i < 3; i++) {
+    estados_anteriores[i]=estados_atuais[i];
     HTTPClient http;
     http.setTimeout(1000);
     String url = "http://" + ips[i] + ":8081/zeroconf/info";
@@ -199,7 +200,6 @@ void consultarEstadosSonoff() {
         Serial.println("Acionamento manual detectado. Pausando automação.");
       }
     } else {
-      estados_atuais[i] = "";
       Serial.println("Erro ao consultar relé: " + http.errorToString(httpCode));
     }
 
@@ -229,6 +229,7 @@ void enviarComandoSonoff(String ips[], String ids[], String estados[]) {
 
     if (httpCode > 0) {
       Serial.println("Comando enviado com sucesso para " + ids[i] + ": " + estados[i]);
+      estados_anteriores[i]= estados[i];
     } else {
       Serial.println("Erro ao enviar comando para " + ids[i] + ": " + http.errorToString(httpCode));
     }
@@ -363,9 +364,7 @@ void loop() {
     previousSendMillis = currentMillis;
     // Controle dos LEDs conforme os níveis de CO₂
     if (CO2 < 650){
-      digitalWrite(LED_GREEN, LOW);
-      digitalWrite(LED_YELLOW, LOW);
-      digitalWrite(LED_RED, LOW);
+      setLEDs(0,0,0);
       // Desliga todos os relés
       estados[0] = "off";
       estados[1] = "off";
@@ -393,8 +392,8 @@ void loop() {
       estados[2] = "on";
     }
     publicarDadosMQTT(estados, CO2);
+    consultarEstadosSonoff();
     if (!manual){
-      consultarEstadosSonoff();
       enviarComandoSonoff(ips, ids, estados);}
   }
   
@@ -402,5 +401,8 @@ void loop() {
   if (currentMillis - previusManualMillis >= manualInterval) {
     manual = false;
     previusManualMillis = millis();
-  }  
+  }
+
+  //Envia comando aos solenoides
+  
 }

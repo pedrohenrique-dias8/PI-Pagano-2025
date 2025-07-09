@@ -90,18 +90,17 @@ void callback(char* topic, byte* payload, unsigned int length) {
 
 // Função para conectar ao MQTT
 void reconnect() { //mudou toda funcao
-  while (!client.connected()) {
-    Serial.print("Conectando ao broker MQTT seguro... ");
-    String clientId = "ESP32Client-" + String(random(0xffff), HEX);
-    if (client.connect(clientId.c_str(), "teste123", "Teste123")) {
-      Serial.println("Conectado com sucesso!");
-      client.subscribe(command_topic);
-    } else {
-      Serial.print("Falha. Código: ");
-      Serial.print(client.state());
-      Serial.println(" Tentando novamente em 5 segundos...");
-      delay(5000);
-    }
+  Serial.print("Conectando ao broker MQTT seguro... ");
+  String clientId = "ESP32Client-" + String(random(0xffff), HEX);
+  if (client.connect(clientId.c_str(), "teste123", "Teste123")) {
+    Serial.println("Conectado com sucesso!");
+    client.subscribe(command_topic);
+  } else {
+    Serial.print("Falha. Código: ");
+    Serial.print(client.state());
+    Serial.println(" Tentando novamente em 2 segundos...");
+    delay(2000);
+    return;
   }
 }
 
